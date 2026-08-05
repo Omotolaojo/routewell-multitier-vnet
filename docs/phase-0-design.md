@@ -88,3 +88,124 @@ Notice: we do not create an "Allow VNet Any Any" rule.
 ---
 
 ## 2.4 Architecture Diagram
+             Internet
+                 |
+          Public IP (Web VM)
+                 |
+          +--------------+
+          |   Web VM     |
+          | 10.10.1.4    |
+          +--------------+
+                 |
+             Port 8080
+                 |
+          +--------------+
+          |   App VM     |
+          | 10.10.2.4    |
+          +--------------+
+                 |
+            Port 3306
+                 |
+          +--------------+
+          | Database VM  |
+          | 10.10.3.4    |
+          +--------------+
+    Azure Bastion (administration)
+         |
+ SSH (22) to all VMs
+
+ 
+Network overview:
+
+- RouteWell-VNet (10.10.0.0/16)
+  - Web Subnet: 10.10.1.0/27
+  - App Subnet: 10.10.2.0/26
+  - DB Subnet:  10.10.3.0/28
+
+---
+
+## Build Plan
+
+Create:
+- Resource Group
+- VNet
+- Three Subnets (Web, App, DB)
+- Three Linux VMs (Web, App, Database)
+- Three NSGs (per subnet)
+- NSG rules (as specified above)
+- Associate NSGs with subnets
+- Bastion
+- Public IP for Web VM
+- Connectivity tests
+
+---
+
+## Connectivity Tests
+
+Should succeed:
+
+- Web → App
+  - curl http://10.10.2.4:8080
+  - or: `nc -zv 10.10.2.4 8080`
+
+- App → Database
+  - `nc -zv 10.10.3.4 3306`
+
+Should fail:
+
+- Web → Database
+  - `nc -zv 10.10.3.4 3306`
+  - Expected: Connection timed out
+
+Take screenshots of successful and failed tests for documentation.
+
+---
+
+## Failure Injection Example
+
+- Delete the NSG rule: Allow App → DB
+
+Result:
+- `nc -zv 10.10.3.4 3306`  
+  Output: Connection timed out
+
+### Investigation
+
+1. Check existing rules:
+   - `az network nsg rule list --resource-group <rg> --nsg-name <nsg-name>`
+2. Observe the missing rule.
+3. Recreate the rule (using `az network nsg rule create ...` or your automation).
+4. Retest connectivity.
+5. Confirm success.
+
+---
+
+## README Mapping
+
+| NSG Rule                 | Worksheet Reference                          |
+|:-------------------------|:---------------------------------------------|
+| Internet → Web 80        | Allows public dispatch application           |
+| Web → App 8080           | Allows application processing                |
+| App → DB 3306            | Allows database queries                      |
+| Bastion → All SSH        | Secure administration                        |
+| Internet → DB Deny       | Compliance requirement (no direct internet DB)|
+| Web → DB Deny            | Least privilege — prevent bypassing app layer |
+
+---
+
+## Bash Script Tasks
+
+This deployment script should automate:
+
+1. Create Resource Group
+2. Create VNet
+3. Create Web subnet
+4. Create App subnet
+5. Create DB subnet
+6. Create NSGs
+7. Create NSG rules
+8. Associate NSGs with subnets
+9. Create Public IP
+10. Create Web VM
+11. Create App VM
+12. Create DB VM
