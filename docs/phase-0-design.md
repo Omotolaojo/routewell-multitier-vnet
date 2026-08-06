@@ -105,7 +105,7 @@ Administrative access does **not** SSH into the Web VM's public IP as a pivot po
 
 This keeps the public attack surface limited to port 80 on the Web VM, and ensures a compromised Web VM cannot be used to pivot into App or DB via SSH, since Web's NSG has no outbound SSH permission to those tiers.
 
-<<<<<<< HEAD
+
                  Internet
                      |
               Public IP
@@ -133,16 +133,12 @@ This keeps the public attack surface limited to port 80 on the Web VM, and ensur
      SSH (22) to all VMs
 --------------------------------------------------------
               RouteWell-VNet (10.10.0.0/16)
-Web Subnet
-10.10.1.0/27
-App Subnet
-10.10.2.0/26
-DB Subnet
-10.10.3.0/28
+
+              
+
 --------------------------------------------------------
-=======
+
 ---
->>>>>>> 54cd017319a71b110b29b0315c9611449f62de8c
 
 ## 2.4 Architecture Diagram
 
@@ -179,7 +175,7 @@ Network overview:
   - Web Subnet:  10.10.1.0/27
   - App Subnet:  10.10.2.0/26
   - DB Subnet:   10.10.3.0/28
-  - Mgmt Subnet: 10.10.4.0/29
+
 
 ---
 
@@ -211,10 +207,6 @@ Should succeed:
 - App → Database *(run from the App VM)*
   - `nc -zv 10.10.3.4 3306`
 
-- Mgmt → Web / App / DB on port 22 *(run from the Bastion/jump VM)*
-  - `nc -zv 10.10.1.4 22`
-  - `nc -zv 10.10.2.4 22`
-  - `nc -zv 10.10.3.4 22`
 
 Should fail:
 
@@ -229,13 +221,13 @@ Should fail:
 - Internet → App or DB, any port *(run from outside the VNet)*
   - Expected: Connection timed out
 
-Take screenshots of successful and failed tests for documentation.
+
 
 ---
 
 ## Failure Injection Example
 
-<<<<<<< HEAD
+
 
 Should fail
 
@@ -255,7 +247,6 @@ Delete the NSG rule:
 Allow App → DB
 =======
 - Delete the NSG rule: Allow App → DB
->>>>>>> 54cd017319a71b110b29b0315c9611449f62de8c
 
 Result:
 - `nc -zv 10.10.3.4 3306`
