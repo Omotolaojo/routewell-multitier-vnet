@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-export MSYS_NO_PATHCONV=1
 set -e
 
 echo "Getting your public IP..."
@@ -9,7 +8,7 @@ ADMIN_IP=$(curl -s -4 ifconfig.me)
 
 echo "Admin IP: $ADMIN_IP"
 
-# Variables
+# Variables for the deployment
 LOCATION="westeurope"
 RG="rg-routewell"
 VNET="vnet-routewell"
@@ -24,7 +23,8 @@ APP_PREFIX="10.10.1.0/26"
 
 DB_SUBNET="db-subnet"
 DB_PREFIX="10.10.2.0/28"
-
+ 
+ # create the resource group, virtual network, and subnets
 echo "Creating Resource Group..."
 
 az group create \
@@ -64,12 +64,13 @@ az network vnet subnet create \
 
 echo "Deployment Complete."
 
+# List the subnets in the virtual network
 az network vnet subnet list \
   --resource-group "$RG" \
   --vnet-name "$VNET" \
   --output table
 
-
+# create the network security groups and associate them with the subnets
 echo "Creating Network Security Groups..."
 
 az network nsg create \
@@ -108,18 +109,18 @@ az network vnet subnet update \
     --network-security-group db-nsg
 
 echo "Creating Web NSG Rules..."
-
+#HTTP access from the Internet to the Web tier
 az network nsg rule create \
     --resource-group "$RG" \
     --nsg-name web-nsg \
-    --name Allow-HTTP-HTTPS \
+    --name Allow-HTTP \
     --priority 100 \
     --direction Inbound \
     --access Allow \
     --protocol Tcp \
     --source-address-prefix "Internet" \
     --source-port-range "*" \
-    --destination-port-ranges 80 443
+    --destination-port-ranges 80
 
 az network nsg rule create \
     --resource-group "$RG" \
@@ -191,7 +192,7 @@ az network nsg rule create \
     --source-port-range "*" \
     --destination-port-range 5432
 
-# Allow SSH only from the App subnet (jump host, one hop further)
+# Allow SSH only from the App subnet
 az network nsg rule create \
     --resource-group "$RG" \
     --nsg-name db-nsg \
@@ -204,7 +205,7 @@ az network nsg rule create \
     --source-port-range "*" \
     --destination-port-range 22
 
-# Block all other traffic from the Virtual Network — this is the fix from Problem 9
+# Block all other traffic from the Virtual Network
 az network nsg rule create \
     --resource-group "$RG" \
     --nsg-name db-nsg \
@@ -255,7 +256,6 @@ az network nic create \
     --subnet "$DB_SUBNET" \
     --network-security-group db-nsg
 
-unset MSYS_NO_PATHCONV
 
 echo "Creating Web VM..."
 

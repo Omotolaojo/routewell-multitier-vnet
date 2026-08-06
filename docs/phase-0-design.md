@@ -172,8 +172,8 @@ The web application requires internet access, so only the web virtual machine re
               | Database VM  |
               |10.10.3.4     |
               +--------------+
-        Azure Bastion
-             |
+        
+                     |
      SSH (22) to all VMs
 --------------------------------------------------------
               RouteWell-VNet (10.10.0.0/16)
@@ -229,10 +229,7 @@ nc -zv 10.10.3.4 3306
 
 Expected
 
-Connection timed out
-
-Take screenshots.
-
+Connection timed out.
 
 
 Failure Injection Example
