@@ -167,8 +167,8 @@ routewell-multitier-vnet
 │   └── public-access.md
 │
 ├── scripts
-│   └── deploy.sh
-│
+│    ├── deploy.sh
+│    └── cleanup.sh
 └── README.md
 ```
 
