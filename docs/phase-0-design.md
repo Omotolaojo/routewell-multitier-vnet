@@ -60,18 +60,18 @@ Chosen subnet: `10.10.3.0/28`
 
 Assume:
 - Web server listens on HTTP (80)
-- SSH only through Bastion
+- SSH only through authorized admin sources (no public SSH)
 - App listens on 8080
 - Database listens on MySQL 3306
 
 | Direction | Source        | Destination | Port | Why |
 |----------:|:--------------|:-----------:|:----:|:----|
 | Inbound   | Internet      | Web         | 80   | Allows customers to access the dispatch application. Without it the application is unreachable. |
-| Inbound   | Azure Bastion | Web         | 22   | Allows administrators to manage the web server securely. Without it, no administration is possible. |
+| Inbound   | SSH (admin) | Web         | 22   | Allows administrators to manage the web server securely. Without it, no administration is possible. |
 | Inbound   | Web           | App         | 8080 | Allows web application to communicate with business logic. Removing it breaks the application. |
-| Inbound   | Azure Bastion | App         | 22   | Secure administration. |
+| Inbound   | SSH (admin) | App         | 22   | Secure administration. |
 | Inbound   | App           | Database    | 3306 | Allows application to retrieve and store customer records. Removing it breaks database functionality. |
-| Inbound   | Azure Bastion | Database    | 22   | Administrative access only. |
+| Inbound   | SSH (admin) | Database    | 22   | Administrative access only. |
 | Deny      | Internet      | Database    | Any  | Prevents direct internet exposure, satisfying compliance requirements. |
 | Deny      | Web           | Database    | 3306 | Prevents bypassing the application layer. |
 
@@ -81,9 +81,9 @@ Notice: we do not create an "Allow VNet Any Any" rule.
 
 ## 2.3 Public Access Mechanism
 
-**Choice:** Azure Bastion + Public IP on Web VM
+**Choice:** SSH + Public IP on Web VM
 
-**Justification:** The web application requires internet access, so only the web virtual machine receives a public IP address. Administrative access is provided through Azure Bastion, eliminating the need to expose SSH to the internet.
+**Justification:** The web application requires internet access, so only the web virtual machine receives a public IP address. Administrative access is provided through SSH (restricted to admin IPs, VPN, or a hardened jumpbox), eliminating the [...]
 
 ---
 
@@ -110,10 +110,10 @@ Notice: we do not create an "Allow VNet Any Any" rule.
           | Database VM  |
           | 10.10.3.4    |
           +--------------+
-    Azure Bastion (administration)
+    SSH (administration)
          |
  SSH (22) to all VMs
-
+ 
  
 Network overview:
 
@@ -134,7 +134,7 @@ Create:
 - Three NSGs (per subnet)
 - NSG rules (as specified above)
 - Associate NSGs with subnets
-- Bastion
+- SSH access configuration (VPN/jumpbox or restricted admin IPs)
 - Public IP for Web VM
 - Connectivity tests
 
@@ -187,7 +187,7 @@ Result:
 | Internet → Web 80        | Allows public dispatch application           |
 | Web → App 8080           | Allows application processing                |
 | App → DB 3306            | Allows database queries                      |
-| Bastion → All SSH        | Secure administration                        |
+| SSH → All SSH        | Secure administration                        |
 | Internet → DB Deny       | Compliance requirement (no direct internet DB)|
 | Web → DB Deny            | Least privilege — prevent bypassing app layer |
 
